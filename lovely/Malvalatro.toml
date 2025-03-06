@@ -1,0 +1,264 @@
+[manifest]
+version = "1.0.0"
+priority = -10
+
+
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+match_indent = true
+position = 'after'
+pattern = '''
+self.added_to_deck = true
+'''
+payload = '''
+if self.playing_card then
+    if next(SMODS.find_card('j_mal_jacker', false)) then
+        local suit_prefix = string.sub(self.base.suit, 1, 1)..'_'
+        self:set_base(G.P_CARDS[suit_prefix..'J'])
+    end
+end
+'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+match_indent = true
+position = 'after'
+pattern = '''
+card.playing_card = G.playing_card
+'''
+payload = '''
+if next(SMODS.find_card('j_mal_jacker', false)) then
+    local suit_prefix = string.sub(card.base.suit, 1, 1)..'_'
+    card:set_base(G.P_CARDS[suit_prefix..'J'])
+end
+'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+match_indent = true
+position = 'at'
+pattern = '''
+if G.GAME.blind.name == 'The Serpent' and
+    not G.GAME.blind.disabled and
+    (G.GAME.current_round.hands_played > 0 or
+    G.GAME.current_round.discards_used > 0) then
+        hand_space = math.min(#G.deck.cards, 3)
+end
+'''
+payload = '''
+if G.GAME.blind.name == 'The Serpent' and
+    not G.GAME.blind.disabled and
+    (G.GAME.current_round.hands_played > 0 or
+    G.GAME.current_round.discards_used > 0) then
+        hand_space = math.min(#G.deck.cards, 3)
+elseif next(SMODS.find_card('j_mal_serpent_oil', false)) and
+    (G.GAME.current_round.hands_played > 0 or
+    G.GAME.current_round.discards_used > 0) then
+        if hand_space < 3 then
+            hand_space = math.min(#G.deck.cards, 3)
+        end
+end
+'''
+
+
+[[patches]]
+[patches.regex]
+target = 'card.lua'
+position = 'after'
+pattern = '''get_id\(\) == [^)^\s]+'''
+payload = ''')'''
+
+
+[[patches]]
+[patches.regex]
+target = 'card.lua'
+position = 'at'
+pattern = '''get_id\(\) == '''
+payload = '''is_rank('''
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/misc_functions.lua'
+match_indent = true
+position = 'at'
+pattern = '''
+function get_X_same(num, hand)
+  local vals = {{},{},{},{},{},{},{},{},{},{},{},{},{},{}}
+  for i=#hand, 1, -1 do
+    local curr = {}
+    table.insert(curr, hand[i])
+    for j=1, #hand do
+      if hand[i]:get_id() == hand[j]:get_id() and i ~= j then
+        table.insert(curr, hand[j])
+      end
+    end
+    if #curr == num then
+      vals[curr[1]:get_id()] = curr
+    end
+  end
+  local ret = {}
+  for i=#vals, 1, -1 do
+    if next(vals[i]) then table.insert(ret, vals[i]) end
+  end
+  return ret
+end
+'''
+payload = '''
+function get_X_same(num, hand)
+  local vals = {{},{},{},{},{},{},{},{},{},{},{},{},{},{}}
+  for i=#hand, 1, -1 do
+    local curr = {}
+    table.insert(curr, hand[i])
+    for j=1, #hand do
+      if hand[i]:is_rank(hand[j]:get_id()) and i ~= j then
+        table.insert(curr, hand[j])
+      end
+    end
+    if #curr == num then
+      local val = curr[1]:get_id()
+      if curr[1]:is_rank(2) then
+        val = 2
+      end
+      vals[val] = curr
+    end
+  end
+  local ret = {}
+  for i=#vals, 1, -1 do
+    if next(vals[i]) then table.insert(ret, vals[i]) end
+  end
+  return ret
+end
+'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'game.lua'
+match_indent = true
+position = 'after'
+pattern = '''
+used_jokers = {},
+'''
+payload = '''
+used_and_held = {},
+'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+match_indent = true
+position = 'after'
+pattern = '''G.GAME.used_jokers[k] = true'''
+payload = '''
+if v.consumeable then
+  if G.GAME.used_and_held[k] then
+    G.GAME.used_and_held[k] = G.GAME.used_and_held[k] + 1
+  else
+    G.GAME.used_and_held[k] = 1
+  end
+end'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+match_indent = true
+position = 'before'
+pattern = '''if not next(find_joker(self.ability.name, true)) then'''
+payload = '''
+if v.consumeable then
+  if G.GAME.used_and_held[k] then
+    G.GAME.used_and_held[k] = G.GAME.used_and_held[k] - 1
+    if G.GAME.used_and_held[k] <= 0 then
+      G.GAME.used_and_held[k] = nil
+    end
+  end
+end'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'cardarea.lua'
+match_indent = true
+position = 'before'
+pattern = '''card:set_card_area(self)'''
+payload = '''
+if (card.config.center.consumeable and card.edition) and (self == G.consumeables and card.area ~= G.consumeables) then
+  local key = card.config.center.key
+  if G.GAME.used_and_held[key] then
+    G.GAME.used_and_held[key] = G.GAME.used_and_held[key] - 1
+    if G.GAME.used_and_held[key] <= 0 then
+      G.GAME.used_and_held[key] = nil
+    end
+  end
+end'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+match_indent = true
+position = 'after'
+pattern = '''self.sell_cost = math.max(1, math.floor(self.cost/2)) + (self.ability.extra_value or 0)'''
+payload = '''
+if self.no_sell then self.sell_cost = 0 + (self.ability.extra_value or 0) end'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+match_indent = true
+position = 'before'
+pattern = '''for k, v in ipairs(_starting_pool) do'''
+payload = '''local voucher_repeat = G:get_mandrake()
+'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+match_indent = true
+position = 'before'
+pattern = '''if _type == 'Enhanced' then'''
+payload = '''local restricted = G.GAME.used_jokers[v.key] and not next(find_joker("Showman"))
+if v.consumeable then
+  restricted = restricted and not (next(SMODS.find_card('j_mal_tic_tac', false)) and not G.GAME.used_and_held[v.key])
+end
+'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+match_indent = true
+position = 'at'
+pattern = '''elseif not (G.GAME.used_jokers[v.key] and not next(find_joker("Showman"))) and'''
+payload = '''elseif not restricted and'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+match_indent = true
+position = 'at'
+pattern = '''if not G.GAME.used_vouchers[v.key] then'''
+payload = '''if not (G.GAME.used_vouchers[v.key] and not (next(SMODS.find_card('j_mal_mandrake', false)) and voucher_repeat[v.key])) then'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+match_indent = true
+position = 'after'
+pattern = '''amount = amount or 1'''
+payload = '''
+for _, v in pairs(SMODS.find_card('j_mal_rix', false)) do
+  amount = amount + G.P_CENTERS.j_mal_rix.config.extra.levels
+end'''
