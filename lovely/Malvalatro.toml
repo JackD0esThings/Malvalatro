@@ -260,5 +260,5 @@ position = 'after'
 pattern = '''amount = amount or 1'''
 payload = '''
 for _, v in pairs(SMODS.find_card('j_mal_rix', false)) do
-  amount = amount + G.P_CENTERS.j_mal_rix.config.extra.levels
+  amount = amount + v.ability.extra.extra_levels
 end'''
