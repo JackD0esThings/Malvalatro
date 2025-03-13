@@ -190,9 +190,9 @@ SMODS.Joker {
 
 
 SMODS.Joker {
-    key = 'corporate',
+    key = 'business',
     loc_txt = {
-        name = 'Corporate Joker',
+        name = 'Business Joker',
         text = {
             "Earn {C:money}$#1#{} at end of round",
             "Increase payout by {C:money}$#2#{}",
@@ -200,7 +200,7 @@ SMODS.Joker {
             "a scoring {C:attention}9{} and {C:attention}5{}"
         }
     },
-    config = { extra = { money = 2, money_gain = 2 } },
+    config = { extra = { money = 1, money_gain = 2 } },
     loc_vars = function(self, info_queue, card)
         return { vars = { card.ability.extra.money, card.ability.extra.money_gain } }
     end,
@@ -479,6 +479,44 @@ SMODS.Joker {
 
 
 SMODS.Joker {
+	key = 'lasagna',
+	loc_txt = {
+		name = 'Lasagna Spiral',
+		text = {
+            "Retrigger each",
+            "played {C:attention}Ace{}"
+		}
+	},
+	config = { extra = { repetitions = 1 } },
+    loc_vars = function(self, info_queue, card)
+        return { vars = { card.ability.extra.repetitions } }
+    end,
+	rarity = 2,
+	atlas = 'Malvalatro_Jokers',
+	pos = { x = 8, y = 11 },
+	cost = 6,
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+	calculate = function(self, card, context)
+		-- if (context.setting_blind and not context.getting_sliced) and not context.blueprint then
+        --     ease_hands_played(-G.GAME.current_round.hands_left + card.ability.extra.hands)
+        --     return { message = 'Spiraling' }
+        -- end
+        if context.cardarea == G.play and context.repetition and not context.repetition_only then
+			if context.other_card:is_rank(14) then
+				return {
+					message = 'Again',
+					repetitions = card.ability.extra.repetitions,
+					card = card
+				}
+			end
+		end
+	end
+}
+
+
+SMODS.Joker {
     key = 'pauper',
     loc_txt = {
         name = 'Pauper',
@@ -517,38 +555,38 @@ SMODS.Joker {
 }
 
 
-SMODS.Joker {
-    key = 'report',
-    loc_txt = {
-        name = 'Report Card',
-        text = {
-            "Retrigger each played {C:attention}#1#{}",
-            "Rank changes every round"
-        }
-    },
-    config = { extra = { repetitions = 1 } },
-    loc_vars = function(self, info_queue, card)
-        return { vars = { localize(G.GAME.current_round.mail_card.rank, 'ranks') } }
-    end,
-    rarity = 2,
-    atlas = 'Malvalatro_Jokers',
-    pos = { x = 0, y = 15 },
-    cost = 6,
-    blueprint_compat = true,
-    eternal_compat = true,
-    perishable_compat = true,
-    calculate = function(self, card, context)
-		if context.cardarea == G.play and context.repetition and not context.repetition_only then
-			if context.other_card:is_rank(G.GAME.current_round.mail_card.id) then
-				return {
-					message = 'Again',
-					repetitions = card.ability.extra.repetitions,
-					card = card
-				}
-			end
-		end
-	end
-}
+-- SMODS.Joker {
+--     key = 'report',
+--     loc_txt = {
+--         name = 'Report Card',
+--         text = {
+--             "Retrigger each played {C:attention}#1#{}",
+--             "Rank changes every round"
+--         }
+--     },
+--     config = { extra = { repetitions = 1 } },
+--     loc_vars = function(self, info_queue, card)
+--         return { vars = { localize(G.GAME.current_round.mail_card.rank, 'ranks') } }
+--     end,
+--     rarity = 2,
+--     atlas = 'Malvalatro_Jokers',
+--     pos = { x = 0, y = 15 },
+--     cost = 6,
+--     blueprint_compat = true,
+--     eternal_compat = true,
+--     perishable_compat = true,
+--     calculate = function(self, card, context)
+-- 		if context.cardarea == G.play and context.repetition and not context.repetition_only then
+-- 			if context.other_card:is_rank(G.GAME.current_round.mail_card.id) then
+-- 				return {
+-- 					message = 'Again',
+-- 					repetitions = card.ability.extra.repetitions,
+-- 					card = card
+-- 				}
+-- 			end
+-- 		end
+-- 	end
+-- }
 
 
 SMODS.Joker {
@@ -556,8 +594,8 @@ SMODS.Joker {
     loc_txt = {
         name = 'Singularity',
         text = {
-            "When a {C:attention}playing card{}",
-            "is destroyed, add an",
+            "When {C:attention}1{} or more {C:attention}playing cards{}",
+            "are destroyed, add an",
             "{C:attention}Ace{} to your deck"
         }
     },
@@ -571,62 +609,34 @@ SMODS.Joker {
     calculate = function(self, card, context)
         if context.remove_playing_cards and #context.removed >= 1 then
             G.E_MANAGER:add_event(Event({ func = function()
-                local cards = {}
-                for i = 1, #context.removed do
-                    local _suit = pseudorandom_element({'S','H','D','C'}, pseudoseed('singularity'))
-                    local cen_pool = {}
-                    for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
-                        if v.key ~= 'm_stone' then 
-                            cen_pool[#cen_pool+1] = v
-                        end
+                -- local cards = {}
+                -- for i = 1, #context.removed do
+                --     local _suit = pseudorandom_element({'S','H','D','C'}, pseudoseed('singularity'))
+                --     local cen_pool = {}
+                --     for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
+                --         if v.key ~= 'm_stone' then 
+                --             cen_pool[#cen_pool+1] = v
+                --         end
+                --     end
+                --     cen_pool[#cen_pool+1] = G.P_CENTERS.c_base
+                --     local card = create_playing_card({front = G.P_CARDS[_suit..'_A'], center = pseudorandom_element(cen_pool, pseudoseed('singularity'))}, G.hand, nil, i ~= 1, {G.C.SECONDARY_SET.Enhanced})
+                --     cards[i] = card
+                -- end
+                -- playing_card_joker_effects(cards)
+                local _suit = pseudorandom_element({'S','H','D','C'}, pseudoseed('singularity'))
+                local cen_pool = {}
+                for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
+                    if v.key ~= 'm_stone' then 
+                        cen_pool[#cen_pool+1] = v
                     end
-                    cen_pool[#cen_pool+1] = G.P_CENTERS.c_base
-                    local card = create_playing_card({front = G.P_CARDS[_suit..'_A'], center = pseudorandom_element(cen_pool, pseudoseed('singularity'))}, G.hand, nil, i ~= 1, {G.C.SECONDARY_SET.Enhanced})
-                    cards[i] = card
                 end
-                playing_card_joker_effects(cards)
+                cen_pool[#cen_pool+1] = G.P_CENTERS.c_base
+                local card = create_playing_card({front = G.P_CARDS[_suit..'_A'], center = pseudorandom_element(cen_pool, pseudoseed('singularity'))}, G.hand, nil, nil, {G.C.SECONDARY_SET.Enhanced})
+                playing_card_joker_effects({card})
             return true end }))
         end
     end
 }
-
-
--- SMODS.Joker {
--- 	key = 'lasagna',
--- 	loc_txt = {
--- 		name = 'Lasagna Spiral',
--- 		text = {
---             "Retrigger each",
---             "played {C:attention}Ace{}"
--- 		}
--- 	},
--- 	config = { extra = { repetitions = 2 } },
---     loc_vars = function(self, info_queue, card)
---         return { vars = { card.ability.extra.repetitions } }
---     end,
--- 	rarity = 3,
--- 	atlas = 'Malvalatro_Jokers',
--- 	pos = { x = 8, y = 11 },
--- 	cost = 6,
---     blueprint_compat = true,
---     eternal_compat = true,
---     perishable_compat = true,
--- 	calculate = function(self, card, context)
--- 		if (context.setting_blind and not context.getting_sliced) and not context.blueprint then
---         --     ease_hands_played(-G.GAME.current_round.hands_left + card.ability.extra.hands)
---         --     return { message = 'Spiraling' }
---         -- end
---         if context.cardarea == G.play and context.repetition and not context.repetition_only then
--- 			if context.other_card:is_rank(14) then
--- 				return {
--- 					message = 'Again',
--- 					repetitions = card.ability.extra.repetitions,
--- 					card = card
--- 				}
--- 			end
--- 		end
--- 	end
--- }
 
 
 SMODS.Joker {
@@ -888,14 +898,15 @@ SMODS.Joker {
     loc_txt = {
         name = "Rix",
         text = {
-            "When a {C:attention}poker hand{}",
-            "is upgraded, it gains",
-            "{C:attention}#1#{} additional levels"
+            "When a {C:attention}poker hand{} is upgraded, it",
+            "gains {C:attention}#2#{} additional level for every {C:attention}#3#{C:inactive} [#4#]{}",
+            "hands played that contain a {C:attention}Two Pair{}",
+            "{C:inactive}(Currently {C:attention}#1#{C:inactive} extra levels)"
         }
     },
-    config = { extra = { levels = 2 } },
+    config = { extra = { extra_levels = 0, level_gain = 1, pairs_played = 5, pairs_played_rix = 5 } },
     loc_vars = function(self, info_queue, card)
-        return { vars = { card.ability.extra.levels } }
+        return { vars = { card.ability.extra.extra_levels, card.ability.extra.level_gain, card.ability.extra.pairs_played, card.ability.extra.pairs_played_rix } }
     end,
     rarity = 4,
     atlas = 'Malvalatro_Jokers',
@@ -903,7 +914,22 @@ SMODS.Joker {
     cost = 20,
     blueprint_compat = false,
     eternal_compat = true,
-    perishable_compat = true
+    perishable_compat = true,
+    calculate = function(self, card, context)
+        if context.before and not context.blueprint then
+            if next(context.poker_hands['Two Pair']) then
+                card.ability.extra.pairs_played_rix = card.ability.extra.pairs_played_rix - 1
+                if card.ability.extra.pairs_played_rix <= 0 then
+                    card.ability.extra.pairs_played_rix = card.ability.extra.pairs_played
+                    card.ability.extra.extra_levels = card.ability.extra.extra_levels + card.ability.extra.level_gain
+                    return {
+                        message = 'Upgrade',
+                        card = card
+                    }
+                end
+            end
+        end
+    end
 }
 
 
@@ -949,20 +975,20 @@ end
 
 
 -- Reset rank for report card each round
-function SMODS.current_mod.reset_game_globals(run_start)
-    G.GAME.current_round.report_card.rank = 'Ace'
-    local valid_report_cards = {}
-    for k, v in ipairs(G.playing_cards) do
-        if v.ability.effect ~= 'Stone Card' then
-            valid_report_cards[#valid_report_cards+1] = v
-        end
-    end
-    if valid_report_cards[1] then 
-        local report_card = pseudorandom_element(valid_report_cards, pseudoseed('report'..G.GAME.round_resets.ante))
-        G.GAME.current_round.report_card.rank = report_card.base.value
-        G.GAME.current_round.report_card.id = report_card.base.id
-    end
-end
+-- function SMODS.current_mod.reset_game_globals(run_start)
+--     G.GAME.current_round.report_card.rank = 'Ace'
+--     local valid_report_cards = {}
+--     for k, v in ipairs(G.playing_cards) do
+--         if v.ability.effect ~= 'Stone Card' then
+--             valid_report_cards[#valid_report_cards+1] = v
+--         end
+--     end
+--     if valid_report_cards[1] then 
+--         local report_card = pseudorandom_element(valid_report_cards, pseudoseed('report'..G.GAME.round_resets.ante))
+--         G.GAME.current_round.report_card.rank = report_card.base.value
+--         G.GAME.current_round.report_card.id = report_card.base.id
+--     end
+-- end
 
 
 -- Pool for Mandrake repeat vouchers
@@ -1001,20 +1027,20 @@ SMODS.Back {
             func = function()
                 if G.jokers then
                     --Last parameter should be in the format 'j_mal_jokername' if modded, otherwise it's 'j_jokername'
-                    local card = create_card("Joker", G.jokers, nil, nil, nil, nil, 'j_mal_malvadar')
-					--card:set_edition('e_negative', true)
-                    card:add_to_deck()
-					card:start_materialize()
-					G.jokers:emplace(card)
-                    -- local card = create_card("Joker", G.jokers, nil, nil, nil, nil, 'j_blueprint')
+                    -- local card = create_card("Joker", G.jokers, nil, nil, nil, nil, 'j_mal_singularity')
 					-- --card:set_edition('e_negative', true)
                     -- card:add_to_deck()
 					-- card:start_materialize()
 					-- G.jokers:emplace(card)
-                    -- card = create_card("Tarot", G.consumeables, nil, nil, nil, nil, 'c_immolate')
+                    -- local card = create_card("Joker", G.jokers, nil, nil, nil, nil, 'j_smiley')
+					-- --card:set_edition('e_negative', true)
+                    -- card:add_to_deck()
+					-- card:start_materialize()
+					-- G.jokers:emplace(card)
+                    -- card = create_card("Tarot", G.consumeables, nil, nil, nil, nil, 'c_hanged_man')
                     -- card:add_to_deck()
 					-- G.consumeables:emplace(card)
-                    -- card = create_card("Tarot", G.consumeables, nil, nil, nil, nil, 'c_immolate')
+                    -- card = create_card("Tarot", G.consumeables, nil, nil, nil, nil, 'c_devil')
                     -- card:add_to_deck()
 					-- G.consumeables:emplace(card)
                     --sendTraceMessage("Testing the message logger", "MessageLogger")
@@ -1077,31 +1103,41 @@ function get_straight(hand)
       local t = {}
       local IDS = {}
       for i=1, #hand do
-        local id = hand[i]:get_id()
 
-        if hand[i]:is_rank(2) then
-          if IDS[2] then
-            IDS[2][#IDS[2]+1] = hand[i]
-          else
-            IDS[2] = {hand[i]}
-          end
+        for j=2, 14 do
+            if hand[i]:is_rank(j) then
+                if IDS[j] then
+                    IDS[j][#IDS[j]+1] = hand[i]
+                else
+                    IDS[j] = {hand[i]}
+                end
+            end
         end
+    --     local id = hand[i]:get_id()
 
-        if hand[i]:is_rank(10) then
-          if IDS[10] then
-            IDS[10][#IDS[10]+1] = hand[i]
-          else
-            IDS[10] = {hand[i]}
-          end
-        end
+    --     if hand[i]:is_rank(2) then
+    --       if IDS[2] then
+    --         IDS[2][#IDS[2]+1] = hand[i]
+    --       else
+    --         IDS[2] = {hand[i]}
+    --       end
+    --     end
 
-        if (id > 1 and id < 15) and (id ~= 2 and id ~=10) then
-          if IDS[id] then
-            IDS[id][#IDS[id]+1] = hand[i]
-          else
-            IDS[id] = {hand[i]}
-          end
-        end
+    --     if hand[i]:is_rank(10) then
+    --       if IDS[10] then
+    --         IDS[10][#IDS[10]+1] = hand[i]
+    --       else
+    --         IDS[10] = {hand[i]}
+    --       end
+    --     end
+
+    --     if (id > 1 and id < 15) and (id ~= 2 and id ~=10) then
+    --       if IDS[id] then
+    --         IDS[id][#IDS[id]+1] = hand[i]
+    --       else
+    --         IDS[id] = {hand[i]}
+    --       end
+    --     end
       end
   
       local straight_length = 0
