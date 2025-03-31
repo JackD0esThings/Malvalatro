@@ -139,6 +139,18 @@ end
 
 [[patches]]
 [patches.pattern]
+target = 'functions/common_events.lua'
+match_indent = true
+position = 'after'
+pattern = '''amount = amount or 1'''
+payload = '''
+for _, v in pairs(SMODS.find_card('j_mal_diploma', false)) do
+  amount = amount + G.P_CENTERS.j_mal_diploma.config.extra.levels
+end'''
+
+
+[[patches]]
+[patches.pattern]
 target = 'game.lua'
 match_indent = true
 position = 'after'
@@ -250,15 +262,3 @@ match_indent = true
 position = 'at'
 pattern = '''if not G.GAME.used_vouchers[v.key] then'''
 payload = '''if not (G.GAME.used_vouchers[v.key] and not (next(SMODS.find_card('j_mal_mandrake', false)) and voucher_repeat[v.key])) then'''
-
-
-[[patches]]
-[patches.pattern]
-target = 'functions/common_events.lua'
-match_indent = true
-position = 'after'
-pattern = '''amount = amount or 1'''
-payload = '''
-for _, v in pairs(SMODS.find_card('j_mal_rix', false)) do
-  amount = amount + G.P_CENTERS.j_mal_rix.config.extra.levels
-end'''
