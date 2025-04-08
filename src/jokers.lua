@@ -180,48 +180,42 @@ SMODS.Joker {
 }
 
 
--- SMODS.Joker {
---     key = 'paycheck',
---     loc_txt = {
---         name = 'Paycheck',
---         text = {
---             "Earn {C:money}$#1#{} at end of round",
---             "Increase payout by {C:money}$#2#{} if",
---             "played hand contains a",
---             "{C:attention}Straight{} and a {C:attention}9{} or a {C:attention}5{}"
---         }
---     },
---     config = { extra = { money = 1, money_gain = 2 } },
---     loc_vars = function(self, info_queue, card)
---         return { vars = { card.ability.extra.money, card.ability.extra.money_gain } }
---     end,
---     rarity = 1,
---     atlas = 'Malvalatro_Jokers',
---     pos = { x = 1, y = 4 },
---     cost = 4,
---     blueprint_compat = false,
---     eternal_compat = true,
---     perishable_compat = true,
---     calculate = function(self, card, context)
---         if context.before and not context.blueprint then
---             local has_five = false
---             local has_nine = false
---             for i = 1, #context.scoring_hand do
---                 if context.scoring_hand[i]:is_rank(5) then has_five = true end
---                 if context.scoring_hand[i]:is_rank(9) then has_nine = true end
---             end
---             if (has_five or has_nine) and next(context.poker_hands["Straight"]) then
---                 card.ability.extra.money = card.ability.extra.money + card.ability.extra.money_gain
---                 return { message = 'Upgrade' }
---             end
---             return true
---         end
---     end,
---     calc_dollar_bonus = function(self, card)
---         local bonus = card.ability.extra.money
---         if bonus > 0 then return bonus end
---     end
--- }
+SMODS.Joker {
+    key = 'paycheck',
+    loc_txt = {
+        name = 'Paycheck',
+        text = {
+            "Earn {C:money}$#1#{} for each scoring",
+            "card between {C:attention}9{} and {C:attention}5{}",
+            "{C:inactive}(Includes 6, 7, and 8){}"
+        }
+    },
+    config = { extra = { money = 1 } },
+    loc_vars = function(self, info_queue, card)
+        return { vars = { card.ability.extra.money } }
+    end,
+    rarity = 1,
+    atlas = 'Malvalatro_Jokers',
+    pos = { x = 1, y = 4 },
+    cost = 4,
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    calculate = function(self, card, context)
+        if context.before then
+            for i = 1, #context.scoring_hand do
+                if not context.scoring_hand[i].debuff and (context.scoring_hand[i]:get_id() > 5 and context.scoring_hand[i]:get_id() < 9) then
+                    G.E_MANAGER:add_event(Event({func = function()
+                        context.scoring_hand[i]:juice_up()
+                        card:juice_up()
+                    return true end })) 
+                    ease_dollars(card.ability.extra.money)
+                    delay(0.23)
+                end
+            end
+        end
+    end
+}
 
 
 SMODS.Joker {
@@ -965,7 +959,7 @@ SMODS.Joker {
             "{C:inactive}(Requires {C:attention}#4#{C:inactive} more each time)"
         }
     },
-    config = { extra = { slots = 1, destroy = 5, malvadar_destroyed = 5, increase = 1 } },
+    config = { extra = { slots = 1, destroy = 4, malvadar_destroyed = 4, increase = 1 } },
     loc_vars = function(self, info_queue, card)
         return { vars = { card.ability.extra.slots, card.ability.extra.destroy, card.ability.extra.malvadar_destroyed, card.ability.extra.increase } }
     end,
