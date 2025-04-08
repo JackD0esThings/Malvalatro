@@ -70,7 +70,7 @@ function Game:get_mandrake()
 
     voucher_repeat['v_grabber'] = true
     voucher_repeat['v_wasteful'] = true
-    voucher_repeat['v_blank'] = true
+    voucher_repeat['v_crystal_ball'] = true
     voucher_repeat['v_paint_brush'] = true
 
     voucher_repeat['v_nacho_tong'] = true
