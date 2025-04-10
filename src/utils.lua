@@ -35,7 +35,7 @@ local igo = Game.init_game_object
 function Game:init_game_object()
 	local ret = igo(self)
 	ret.current_round.lasagna_card = { rank = 'Ace' }
-    --ret.current_round.report_card = { hand = 'High Card' }
+    ret.current_round.loom_card = { rank = 'Ace' }
 	return ret
 end
 
@@ -55,11 +55,18 @@ function SMODS.current_mod.reset_game_globals(run_start)
         G.GAME.current_round.lasagna_card.id = lasagna_card.base.id
     end
 
-    -- local _poker_hands = {}
-    -- for k, v in pairs(G.GAME.hands) do
-    --     if v.visible and k ~= G.GAME.current_round.report_card.hand then _poker_hands[#_poker_hands+1] = k end
-    -- end
-    -- G.GAME.current_round.report_card.hand = pseudorandom_element(_poker_hands, pseudoseed('report'))
+    G.GAME.current_round.loom_card.rank = 'Ace'
+    local valid_loom_cards = {}
+    for k, v in ipairs(G.playing_cards) do
+        if v.ability.effect ~= 'Stone Card' then
+            valid_loom_cards[#valid_loom_cards+1] = v
+        end
+    end
+    if valid_loom_cards[1] then 
+        local loom_card = pseudorandom_element(valid_loom_cards, pseudoseed('loom'..G.GAME.round_resets.ante))
+        G.GAME.current_round.loom_card.rank = loom_card.base.value
+        G.GAME.current_round.loom_card.id = loom_card.base.id
+    end
 end
 
 
@@ -114,31 +121,6 @@ function get_straight(hand)
                 end
             end
         end
-    --     local id = hand[i]:get_id()
-
-    --     if hand[i]:is_rank(2) then
-    --       if IDS[2] then
-    --         IDS[2][#IDS[2]+1] = hand[i]
-    --       else
-    --         IDS[2] = {hand[i]}
-    --       end
-    --     end
-
-    --     if hand[i]:is_rank(10) then
-    --       if IDS[10] then
-    --         IDS[10][#IDS[10]+1] = hand[i]
-    --       else
-    --         IDS[10] = {hand[i]}
-    --       end
-    --     end
-
-    --     if (id > 1 and id < 15) and (id ~= 2 and id ~=10) then
-    --       if IDS[id] then
-    --         IDS[id][#IDS[id]+1] = hand[i]
-    --       else
-    --         IDS[id] = {hand[i]}
-    --       end
-    --     end
       end
   
       local straight_length = 0
