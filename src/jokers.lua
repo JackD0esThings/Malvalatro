@@ -186,8 +186,8 @@ SMODS.Joker {
         name = 'Paycheck',
         text = {
             "Earn {C:money}$#1#{} for each scoring",
-            "card between {C:attention}9{} and {C:attention}5{}",
-            "{C:inactive}(Includes 6, 7, and 8){}"
+            "card from {C:attention}9{} to {C:attention}5{}",
+            "{C:inactive}(Includes 5, 6, 7, 8, and 9){}"
         }
     },
     config = { extra = { money = 1 } },
@@ -197,14 +197,14 @@ SMODS.Joker {
     rarity = 1,
     atlas = 'Malvalatro_Jokers',
     pos = { x = 1, y = 4 },
-    cost = 4,
+    cost = 6,
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
     calculate = function(self, card, context)
         if context.before then
             for i = 1, #context.scoring_hand do
-                if not context.scoring_hand[i].debuff and (context.scoring_hand[i]:get_id() > 5 and context.scoring_hand[i]:get_id() < 9) then
+                if not context.scoring_hand[i].debuff and (context.scoring_hand[i]:get_id() >= 5 and context.scoring_hand[i]:get_id() <= 9) then
                     G.E_MANAGER:add_event(Event({func = function()
                         context.scoring_hand[i]:juice_up()
                         card:juice_up()
@@ -228,6 +228,10 @@ SMODS.Joker {
             "no consumable cards are held"
         }
     },
+    loc_vars = function(self, info_queue, card)
+        info_queue[#info_queue + 1] = G.P_CENTERS.c_strength
+        return { vars = {} }
+    end,
     rarity = 1,
     atlas = 'Malvalatro_Jokers',
     pos = { x = 7, y = 14 },
@@ -242,7 +246,7 @@ SMODS.Joker {
                 func = (function()
                     G.E_MANAGER:add_event(Event({
                         func = function() 
-                            local tarot = create_card('Tarot',G.consumeables, nil, nil, nil, nil, 'c_strength', 'bodybuilder')
+                            local tarot = create_card('Tarot', G.consumeables, nil, nil, nil, nil, 'c_strength', 'bodybuilder')
                             tarot:add_to_deck()
                             G.consumeables:emplace(tarot)
                             G.GAME.consumeable_buffer = 0
@@ -253,6 +257,36 @@ SMODS.Joker {
                         card = card
                     }
             end)}))
+        end
+    end
+}
+
+
+SMODS.Joker {
+    key = 'omelette',
+    loc_txt = {
+        name = "Omelette",
+        text = {
+            "When a card is {C:attention}sold{}",
+            "this Joker gains",
+            "its {C:attention}sell value{}"
+        }
+    },
+    rarity = 1,
+    atlas = 'Malvalatro_Jokers',
+    pos = { x = 0, y = 10 },
+    cost = 2,
+    blueprint_compat = false,
+    eternal_compat = true,
+    perishable_compat = true,
+    calculate = function(self, card, context)
+        if context.selling_card then
+            card.ability.extra_value = card.ability.extra_value + context.card.sell_cost
+            card:set_cost()
+            return {
+                message = localize('k_val_up'),
+                colour = G.C.MONEY
+            }
         end
     end
 }
@@ -478,6 +512,10 @@ SMODS.Joker {
             "create a {C:attention}Double Tag{}"
         }
     },
+    loc_vars = function(self, info_queue, card)
+        info_queue[#info_queue + 1] = {key = 'tag_double', set = 'Tag'}
+        return { vars = {} }
+    end,
     rarity = 2,
     atlas = 'Malvalatro_Jokers',
     pos = { x = 4, y = 6 },
@@ -536,6 +574,54 @@ SMODS.Joker {
                     message = localize { type='variable', key='a_chips', vars = { card.ability.extra.chips } },
                     chip_mod = card.ability.extra.chips
                 }
+            end
+        end
+    end
+}
+
+
+SMODS.Joker {
+    key = 'loom',
+    loc_txt = {
+        name = "The Loom",
+        text = {
+            "If any discard is a single {C:attention}#1#{}",
+            "destroy it and create a",
+            "random {C:tarot}Tarot{} card",
+            "Rank changes every round"
+        }
+    },
+    loc_vars = function(self, info_queue, card)
+        return { vars = { localize(G.GAME.current_round.loom_card.rank, 'ranks') } }
+    end,
+    rarity = 2,
+    atlas = 'Malvalatro_Jokers',
+    pos = { x = 1, y = 10 },
+    cost = 6,
+    blueprint_compat = false,
+    eternal_compat = true,
+    perishable_compat = true,
+    calculate = function(self, card, context)
+        if context.discard then
+            if #context.full_hand == 1 then
+                if context.full_hand[1]:is_rank(G.GAME.current_round.loom_card.id) then
+                    local consumeable_max = G.consumeables.config.card_limit - #G.consumeables.cards
+                    G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                    if consumeable_max > 0 then
+                        G.E_MANAGER:add_event(Event({
+                            func = (function()
+                                local card = create_card('Tarot', G.consumeables, nil, nil, nil, nil, nil, 'loom')
+                                card:add_to_deck()
+                                G.consumeables:emplace(card)
+                                G.GAME.consumeable_buffer = 0
+                                return true
+                        end)}))
+                    end
+                    return {
+                        remove = true,
+                        card = card
+                    }
+                end
             end
         end
     end
@@ -628,86 +714,6 @@ SMODS.Joker {
 		end
 	end
 }
-
-
--- SMODS.Joker {
---     key = 'report',
---     loc_txt = {
---         name = 'Report Card',
---         text = {
---             "Upgrade played {C:attention}poker hand{}",
---             "if it is a {C:attention}#1#{}",
---             "Poker hand changes every round"
---         }
---     },
---     loc_vars = function(self, info_queue, card)
---         return { vars = { localize(G.GAME.current_round.report_card.hand, 'poker_hands') } }
---     end,
---     rarity = 2,
---     atlas = 'Malvalatro_Jokers',
---     pos = { x = 0, y = 15 },
---     cost = 6,
---     blueprint_compat = true,
---     eternal_compat = true,
---     perishable_compat = true,
---     calculate = function(self, card, context)
---         if context.before then
---             if context.scoring_name == G.GAME.current_round.report_card.hand then
---                 level_up_hand(context.blueprint_card or card, G.GAME.current_round.report_card.hand, nil, 1)
---             end
---         end
---     end
--- }
-
-
--- SMODS.Joker {
---     key = 'singularity',
---     loc_txt = {
---         name = 'Singularity',
---         text = {
---             "When {C:attention}1{} or more {C:attention}playing cards{}",
---             "are destroyed, add an",
---             "{C:attention}Ace{} to your deck"
---         }
---     },
---     rarity = 3,
--- 	atlas = 'Malvalatro_Jokers',
--- 	pos = { x = 2, y = 4 },
--- 	cost = 7,
---     blueprint_compat = true,
---     eternal_compat = true,
---     perishable_compat = true,
---     calculate = function(self, card, context)
---         if context.remove_playing_cards and #context.removed >= 1 then
---             G.E_MANAGER:add_event(Event({ func = function()
---                 local cards = {}
---                 for i = 1, #context.removed do
---                     local _suit = pseudorandom_element({'S','H','D','C'}, pseudoseed('singularity'))
---                     local cen_pool = {}
---                     for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
---                         if v.key ~= 'm_stone' then 
---                             cen_pool[#cen_pool+1] = v
---                         end
---                     end
---                     cen_pool[#cen_pool+1] = G.P_CENTERS.c_base
---                     local card = create_playing_card({front = G.P_CARDS[_suit..'_A'], center = pseudorandom_element(cen_pool, pseudoseed('singularity'))}, G.hand, nil, i ~= 1, {G.C.SECONDARY_SET.Enhanced})
---                     cards[i] = card
---                 end
---                 playing_card_joker_effects(cards)
---                 local _suit = pseudorandom_element({'S','H','D','C'}, pseudoseed('singularity'))
---                 local cen_pool = {}
---                 for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
---                     if v.key ~= 'm_stone' then 
---                         cen_pool[#cen_pool+1] = v
---                     end
---                 end
---                 cen_pool[#cen_pool+1] = G.P_CENTERS.c_base
---                 local card = create_playing_card({front = G.P_CARDS[_suit..'_A'], center = pseudorandom_element(cen_pool, pseudoseed('singularity'))}, G.hand, nil, nil, {G.C.SECONDARY_SET.Enhanced})
---                 playing_card_joker_effects({card})
---             return true end }))
---         end
---     end
--- }
 
 
 SMODS.Joker {
@@ -833,6 +839,30 @@ SMODS.Joker {
 
 
 SMODS.Joker {
+    key = 'haunted',
+    loc_txt = {
+        name = 'Haunted Joker',
+        text = {
+            "All {C:tarot}Tarot{} cards have a",
+            "{C:green}#1# in #2#{} chance to appear",
+            "as a {C:spectral}Spectral{} card instead"
+        }
+    },
+    config = { extra = { odds = 4 } },
+    rarity = 3,
+    atlas = 'Malvalatro_Jokers',
+    pos = { x = 8, y = 10 },
+    cost = 8,
+    blueprint_compat = false,
+    eternal_compat = true,
+    perishable_compat = true,
+    loc_vars = function(self, info_queue, card)
+        return { vars = { (G.GAME.probabilities.normal or 1), card.ability.extra.odds } }
+    end
+}
+
+
+SMODS.Joker {
     key = 'jollar',
     loc_txt = {
         name = 'Jollar Bill',
@@ -865,15 +895,58 @@ SMODS.Joker {
 
 
 SMODS.Joker {
+    key = 'reaper',
+    loc_txt = {
+        name = 'The Reaper',
+        text = {
+            "When {C:attention}#1#{} or more {C:attention}playing{}",
+            "{C:attention}cards{} are destroyed",
+            "create a {C:attention}Death{} card",
+            "{C:inactive}(Must have room){}"
+        }
+    },
+    config = { extra = { destroyed = 1 } },
+    rarity = 3,
+    atlas = 'Malvalatro_Jokers',
+    pos = { x = 3, y = 4 },
+    cost = 8,
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    loc_vars = function(self, info_queue, card)
+        info_queue[#info_queue + 1] = G.P_CENTERS.c_death
+        return { vars = { card.ability.extra.destroyed } }
+    end,
+    calculate = function(self, card, context)
+        if context.remove_playing_cards and #context.removed >= card.ability.extra.destroyed then
+            if G.consumeables.config.card_limit - #G.consumeables.cards > 0 then
+                G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                G.E_MANAGER:add_event(Event({
+                    func = function() 
+                        local tarot = create_card('Tarot', G.consumeables, nil, nil, nil, nil, 'c_death', 'reaper')
+                        tarot:add_to_deck()
+                        G.consumeables:emplace(tarot)
+                        G.GAME.consumeable_buffer = 0
+                        return {
+                            card = card
+                        }
+                end}))
+            end
+        end
+    end
+}
+
+
+SMODS.Joker {
     key = 'tic_tac',
     loc_txt = {
         name = 'Tic-Tac',
         text = {
             "{C:dark_edition}Non-Negative{} consumable",
-            "cards have a {C:green}#1#{} in {C:green}#2#{} chance",
+            "cards have a {C:green}#1# in #2#{} chance",
             "to create a {C:dark_edition}Negative{}",
             "free copy when used",
-            "{C:inactive}(Negative copies can still appear)"
+            "{C:inactive}(Copies can still appear)"
         }
     },
     config = { extra = { odds = 2 } },
@@ -885,7 +958,7 @@ SMODS.Joker {
     eternal_compat = true,
     perishable_compat = true,
     loc_vars = function(self, info_queue, card)
-        info_queue[#info_queue + 1] = G.P_CENTERS.e_negative
+        info_queue[#info_queue + 1] = {key = 'e_negative_consumable', set = 'Edition', config = {extra = 1}}
         return { vars = { (G.GAME.probabilities.normal or 1), card.ability.extra.odds } }
     end,
     calculate = function(self, card, context)
@@ -925,6 +998,10 @@ SMODS.Joker {
             "still appear in the {C:attention}shop{}"
         }
     },
+    loc_vars = function(self, info_queue, card)
+        info_queue[#info_queue + 1] = {key = 'tag_voucher', set = 'Tag'}
+        return { vars = {} }
+    end,
     rarity = 4,
     atlas = 'Malvalatro_Jokers',
     pos = { x = 4, y = 8 },
@@ -1032,11 +1109,16 @@ SMODS.Joker {
         name = "Rix",
         text = {
             "When you {C:attention}buy{} a Joker",
-            "create a {C:dark_edition}Negative{} copy of it",
+            "create a {C:dark_edition}Negative{} free copy",
             "When you {C:attention}sell{} a Joker",
-            "destroy all copies of it"
+            "destroy all copies of it",
+            "{C:inactive}(Destroy copies when this is sold){}"
         }
     },
+    loc_vars = function(self, info_queue, card)
+        info_queue[#info_queue + 1] = {key = 'e_negative', set = 'Edition', config = {extra = 1}}
+        return { vars = {} }
+    end,
     rarity = 4,
     atlas = 'Malvalatro_Jokers',
     pos = { x = 7, y = 8 },
@@ -1050,6 +1132,7 @@ SMODS.Joker {
                 G.E_MANAGER:add_event(Event({
                     func = function()
                         local copy = copy_card(context.card, nil)
+                        copy.no_sell = true
                         copy:set_edition('e_negative', true)
                         copy:add_to_deck()
                         G.jokers:emplace(copy)
@@ -1063,7 +1146,7 @@ SMODS.Joker {
                 G.E_MANAGER:add_event(Event({
                     func = function()
                         for i = 1, #G.jokers.cards do
-                            if context.card.ability.name == G.jokers.cards[i].ability.name then
+                            if (context.card.ability.name == G.jokers.cards[i].ability.name) and G.jokers.cards[i].no_sell then
                                 G.jokers.cards[i]:start_dissolve({G.C.RED}, nil, 1.6)
                             end
                         end
@@ -1071,6 +1154,18 @@ SMODS.Joker {
                     end
                 }))
             end
+        end
+        if context.selling_self then
+            G.E_MANAGER:add_event(Event({
+                func = function()
+                    for i = 1, #G.jokers.cards do
+                        if G.jokers.cards[i].no_sell then
+                            G.jokers.cards[i]:start_dissolve({G.C.RED}, nil, 1.6)
+                        end
+                    end
+                    return true
+                end
+            }))
         end
     end
 }
