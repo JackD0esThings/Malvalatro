@@ -262,3 +262,17 @@ match_indent = true
 position = 'at'
 pattern = '''if not G.GAME.used_vouchers[v.key] then'''
 payload = '''if not (G.GAME.used_vouchers[v.key] and not (next(SMODS.find_card('j_mal_mandrake', false)) and voucher_repeat[v.key])) then'''
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+match_indent = true
+position = 'after'
+pattern = '''local center = G.P_CENTERS.b_red'''
+payload = '''
+if not forced_key and (_type == 'Tarot' and next(SMODS.find_card('j_mal_haunted', false))) then
+  if pseudorandom('haunted') < G.GAME.probabilities.normal / G.P_CENTERS.j_mal_haunted.config.extra.odds then
+    _type = 'Spectral'
+  end
+end'''
