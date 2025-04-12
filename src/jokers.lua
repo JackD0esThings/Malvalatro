@@ -275,7 +275,7 @@ SMODS.Joker {
     rarity = 1,
     atlas = 'Malvalatro_Jokers',
     pos = { x = 0, y = 10 },
-    cost = 2,
+    cost = 1,
     blueprint_compat = false,
     eternal_compat = true,
     perishable_compat = true,
@@ -585,9 +585,9 @@ SMODS.Joker {
     loc_txt = {
         name = "The Loom",
         text = {
-            "If any discard is a single {C:attention}#1#{}",
-            "destroy it and create a",
-            "random {C:tarot}Tarot{} card",
+            "If any {C:attention}discard{} is a {C:attention}single{}",
+            "{C:attention}#1#{}, destroy it and",
+            "create a random {C:tarot}Tarot{} card",
             "Rank changes every round"
         }
     },
@@ -797,7 +797,7 @@ SMODS.Joker {
         name = 'Whale',
         text = {
             "Jokers and {C:attention}playing cards{}",
-            "with {C:blue}Editions{} give {X:mult,C:white}X#1#{} Mult"
+            "with {C:dark_edition}Editions{} give {X:mult,C:white}X#1#{} Mult"
         }
     },
     config = { extra = { mult = 1.5 } },
@@ -945,8 +945,7 @@ SMODS.Joker {
             "{C:dark_edition}Non-Negative{} consumable",
             "cards have a {C:green}#1# in #2#{} chance",
             "to create a {C:dark_edition}Negative{}",
-            "free copy when used",
-            "{C:inactive}(Copies can still appear)"
+            "free copy when used"
         }
     },
     config = { extra = { odds = 2 } },
@@ -1020,8 +1019,8 @@ SMODS.Joker {
             "Create a free {C:attention}Voucher Tag{}",
             "when {C:attention}Small Blind{} or",
             "{C:attention}Big Blind{} is defeated",
-            "Some {C:attention}redeemed{} vouchers can",
-            "still appear in the {C:attention}shop{}"
+            "{C:inactive}(Some redeemed vouchers{}",
+            "{C:inactive}still appear in the shop){}"
         }
     },
     loc_vars = function(self, info_queue, card)
@@ -1135,10 +1134,9 @@ SMODS.Joker {
         name = "Rix",
         text = {
             "When you {C:attention}buy{} a Joker",
-            "create a {C:dark_edition}Negative{} free copy of it",
-            "When you {C:attention}sell{} or {C:attention}destroy{} a Joker",
-            "destroy all copies of it",
-            "{C:inactive}(Destroy copies when this is sold){}"
+            "create a {C:dark_edition}Negative{} free copy",
+            "for as long as you have the",
+            "{C:attention}original{} Joker and this Joker"
         }
     },
     loc_vars = function(self, info_queue, card)
