@@ -30,6 +30,19 @@ function ease_dollars(mod, instant)
 end
 
 
+-- Destroying Joker trigger
+local sd = Card.start_dissolve
+function Card:start_dissolve(dissolve_colours, silent, dissolve_time_fac, no_juice)
+    local ret = sd(self, dissolve_colours, silent, dissolve_time_fac, no_juice)
+    if self.ability.set == 'Joker' then
+        for i = 1, #G.jokers.cards do
+            G.jokers.cards[i]:calculate_joker({destroy_joker = true, card = self})
+        end
+    end
+    return ret
+end
+
+
 -- Initialize the rank for Lasagna Spiral and poker hand for Report Card
 local igo = Game.init_game_object
 function Game:init_game_object()
