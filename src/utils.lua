@@ -34,7 +34,7 @@ end
 local sd = Card.start_dissolve
 function Card:start_dissolve(dissolve_colours, silent, dissolve_time_fac, no_juice)
     local ret = sd(self, dissolve_colours, silent, dissolve_time_fac, no_juice)
-    if self.ability.set == 'Joker' then
+    if self.ability.set == 'Joker' and G.jokers then
         for i = 1, #G.jokers.cards do
             G.jokers.cards[i]:calculate_joker({destroy_joker = true, card = self})
         end
