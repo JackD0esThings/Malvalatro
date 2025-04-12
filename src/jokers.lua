@@ -982,6 +982,32 @@ SMODS.Joker {
                 end
             end
         end
+        if context.selling_self then
+            G.E_MANAGER:add_event(Event({
+                func = function()
+                    for i = 1, #G.consumeables.cards do
+                        if G.consumeables.cards[i].no_sell then
+                            G.consumeables.cards[i]:start_dissolve({G.C.RED}, nil, 1.6)
+                        end
+                    end
+                    return true
+                end
+            }))
+        end
+        if context.destroy_joker then
+            if context.card == card then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        for i = 1, #G.consumeables.cards do
+                            if G.consumeables.cards[i].no_sell then
+                                G.consumeables.cards[i]:start_dissolve({G.C.RED}, nil, 1.6)
+                            end
+                        end
+                        return true
+                    end
+                }))
+            end
+        end
     end
 }
 
@@ -1109,8 +1135,8 @@ SMODS.Joker {
         name = "Rix",
         text = {
             "When you {C:attention}buy{} a Joker",
-            "create a {C:dark_edition}Negative{} free copy",
-            "When you {C:attention}sell{} a Joker",
+            "create a {C:dark_edition}Negative{} free copy of it",
+            "When you {C:attention}sell{} or {C:attention}destroy{} a Joker",
             "destroy all copies of it",
             "{C:inactive}(Destroy copies when this is sold){}"
         }
@@ -1128,7 +1154,7 @@ SMODS.Joker {
     perishable_compat = true,
     calculate = function(self, card, context)
         if context.buying_card then
-            if context.card.ability.set == "Joker" then
+            if context.card.ability.set == "Joker" and context.card ~= card then
                 G.E_MANAGER:add_event(Event({
                     func = function()
                         local copy = copy_card(context.card, nil)
@@ -1141,31 +1167,32 @@ SMODS.Joker {
                 }))
             end
         end
-        if context.selling_card then
+        if context.selling_card or context.destroy_joker then
             if context.card.ability.set == "Joker" then
-                G.E_MANAGER:add_event(Event({
-                    func = function()
-                        for i = 1, #G.jokers.cards do
-                            if (context.card.ability.name == G.jokers.cards[i].ability.name) and G.jokers.cards[i].no_sell then
-                                G.jokers.cards[i]:start_dissolve({G.C.RED}, nil, 1.6)
+                if context.card == card then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            for i = 1, #G.jokers.cards do
+                                if G.jokers.cards[i].no_sell then
+                                    G.jokers.cards[i]:start_dissolve({G.C.RED}, nil, 1.6)
+                                end
                             end
+                            return true
                         end
-                        return true
-                    end
-                }))
-            end
-        end
-        if context.selling_self then
-            G.E_MANAGER:add_event(Event({
-                func = function()
-                    for i = 1, #G.jokers.cards do
-                        if G.jokers.cards[i].no_sell then
-                            G.jokers.cards[i]:start_dissolve({G.C.RED}, nil, 1.6)
+                    }))
+                else
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            for i = 1, #G.jokers.cards do
+                                if (context.card.ability.name == G.jokers.cards[i].ability.name) and G.jokers.cards[i].no_sell then
+                                    G.jokers.cards[i]:start_dissolve({G.C.RED}, nil, 1.6)
+                                end
+                            end
+                            return true
                         end
-                    end
-                    return true
+                    }))
                 end
-            }))
+            end
         end
     end
 }
