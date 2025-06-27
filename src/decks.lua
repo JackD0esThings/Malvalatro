@@ -23,8 +23,9 @@ SMODS.Atlas {
 --             func = function()
 --                 if G.jokers then
 --                     --Last parameter should be in the format 'j_mal_jokername' if modded, otherwise it's 'j_jokername'
---                     local card = create_card("Joker", G.jokers, nil, nil, nil, nil, 'j_mal_malvadar')
--- 					--card:set_edition('e_negative', true)
+--                     local card = create_card("Joker", G.jokers, nil, nil, nil, nil, 'j_mal_jacker')
+-- 					--card:set_edition('e_mal_phantom', true)
+--                     --card:set_eternal(true)
 --                     card:add_to_deck()
 -- 					card:start_materialize()
 -- 					G.jokers:emplace(card)
@@ -33,7 +34,8 @@ SMODS.Atlas {
 --                     -- card:add_to_deck()
 -- 					-- card:start_materialize()
 -- 					-- G.jokers:emplace(card)
---                     -- card = create_card("Tarot", G.consumeables, nil, nil, nil, nil, 'c_immolate')
+--                     -- card = create_card("Tarot", G.consumeables, nil, nil, nil, nil, 'c_emperor')
+--                     -- card:set_edition('e_negative', true)
 --                     -- card:add_to_deck()
 -- 					-- G.consumeables:emplace(card)
 --                     --sendTraceMessage("Testing the message logger", "MessageLogger")
