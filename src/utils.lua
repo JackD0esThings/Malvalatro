@@ -1,3 +1,23 @@
+--Trigger for phantom cards
+local cj = Card.calculate_joker
+function Card:calculate_joker(context)
+    local ret = cj(self, context)
+    if context.end_of_round then
+        if self.edition and not self.debuff then
+            if self.edition.key == "e_mal_phantom" and not self.ability.eternal then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        self:start_dissolve()
+                        return true
+                    end
+                }))
+            end
+        end
+    end
+    return ret
+end
+
+
 -- Upgrading Aelar when +Mult triggers
 local scie = SMODS.calculate_individual_effect
 function SMODS.calculate_individual_effect(effect, scored_card, key, amount, from_edition)
@@ -49,6 +69,7 @@ function Game:init_game_object()
 	local ret = igo(self)
 	ret.current_round.lasagna_card = { rank = 'Ace' }
     ret.current_round.loom_card = { rank = 'Ace' }
+    --ret.current_round.report_card = { hand = 'High Card' }
 	return ret
 end
 
@@ -80,6 +101,12 @@ function SMODS.current_mod.reset_game_globals(run_start)
         G.GAME.current_round.loom_card.rank = loom_card.base.value
         G.GAME.current_round.loom_card.id = loom_card.base.id
     end
+
+    -- local _poker_hands = {}
+    -- for k, v in pairs(G.GAME.hands) do
+    --     if v.visible and k ~= G.GAME.current_round.report_card.hand then _poker_hands[#_poker_hands+1] = k end
+    -- end
+    -- G.GAME.current_round.report_card.hand = pseudorandom_element(_poker_hands, pseudoseed('report'))
 end
 
 
@@ -134,6 +161,31 @@ function get_straight(hand)
                 end
             end
         end
+    --     local id = hand[i]:get_id()
+
+    --     if hand[i]:is_rank(2) then
+    --       if IDS[2] then
+    --         IDS[2][#IDS[2]+1] = hand[i]
+    --       else
+    --         IDS[2] = {hand[i]}
+    --       end
+    --     end
+
+    --     if hand[i]:is_rank(10) then
+    --       if IDS[10] then
+    --         IDS[10][#IDS[10]+1] = hand[i]
+    --       else
+    --         IDS[10] = {hand[i]}
+    --       end
+    --     end
+
+    --     if (id > 1 and id < 15) and (id ~= 2 and id ~=10) then
+    --       if IDS[id] then
+    --         IDS[id][#IDS[id]+1] = hand[i]
+    --       else
+    --         IDS[id] = {hand[i]}
+    --       end
+    --     end
       end
   
       local straight_length = 0
